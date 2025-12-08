@@ -4,124 +4,324 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FilterSelector, { FilterType } from './FilterSelector';
 import FrameSelector, { FrameType } from './FrameSelector';
+import { CollageType } from './CollageSelector';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface PhotoResultProps {
-  imageData: string;
+  images: string[];
+  collageMode: CollageType;
   onRetake: () => void;
 }
 
-const PhotoResult = ({ imageData, onRetake }: PhotoResultProps) => {
+const PhotoResult = ({ images, collageMode, onRetake }: PhotoResultProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [filter, setFilter] = useState<FilterType>('normal');
   const [frame, setFrame] = useState<FrameType>('none');
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
 
-  // Apply filter and frame to canvas
+  const applyFilter = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+    if (filter === 'normal') return;
+    
+    const imageDataObj = ctx.getImageData(x, y, width, height);
+    const data = imageDataObj.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+
+      switch (filter) {
+        case 'grayscale': {
+          const gray = r * 0.299 + g * 0.587 + b * 0.114;
+          data[i] = gray;
+          data[i + 1] = gray;
+          data[i + 2] = gray;
+          break;
+        }
+        case 'sepia': {
+          data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+          data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+          data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+          break;
+        }
+        case 'contrast': {
+          const factor = 1.4;
+          data[i] = Math.min(255, Math.max(0, (r - 128) * factor + 128));
+          data[i + 1] = Math.min(255, Math.max(0, (g - 128) * factor + 128));
+          data[i + 2] = Math.min(255, Math.max(0, (b - 128) * factor + 128));
+          break;
+        }
+        case 'vintage': {
+          data[i] = Math.min(255, r * 1.1 + 20);
+          data[i + 1] = Math.min(255, g * 0.9 + 10);
+          data[i + 2] = Math.min(255, b * 0.7);
+          break;
+        }
+        case 'cool': {
+          data[i] = r * 0.9;
+          data[i + 1] = g;
+          data[i + 2] = Math.min(255, b * 1.2 + 20);
+          break;
+        }
+      }
+    }
+
+    ctx.putImageData(imageDataObj, x, y);
+  };
+
+  const drawFrame = (ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number, padding: number) => {
+    switch (frame) {
+      case 'heart': {
+        ctx.fillStyle = '#ffb6c1';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        // Draw hearts pattern on border
+        ctx.fillStyle = '#ff69b4';
+        for (let i = 0; i < canvasWidth; i += 40) {
+          drawHeart(ctx, i + 20, 15, 12);
+          drawHeart(ctx, i + 20, canvasHeight - 15, 12);
+        }
+        for (let i = 40; i < canvasHeight - 40; i += 40) {
+          drawHeart(ctx, 15, i + 20, 12);
+          drawHeart(ctx, canvasWidth - 15, i + 20, 12);
+        }
+        break;
+      }
+      case 'stars': {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = '#ffd700';
+        for (let i = 0; i < canvasWidth; i += 35) {
+          drawStar(ctx, i + 17, 15, 5, 10, 5);
+          drawStar(ctx, i + 17, canvasHeight - 15, 5, 10, 5);
+        }
+        for (let i = 35; i < canvasHeight - 35; i += 35) {
+          drawStar(ctx, 15, i + 17, 5, 10, 5);
+          drawStar(ctx, canvasWidth - 15, i + 17, 5, 10, 5);
+        }
+        break;
+      }
+      case 'filmstrip': {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        // Draw film holes
+        ctx.fillStyle = '#ffffff';
+        for (let i = 20; i < canvasHeight - 20; i += 30) {
+          ctx.fillRect(8, i, 12, 18);
+          ctx.fillRect(canvasWidth - 20, i, 12, 18);
+        }
+        break;
+      }
+      case 'gradient': {
+        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+        gradient.addColorStop(0, '#ff6b6b');
+        gradient.addColorStop(0.25, '#feca57');
+        gradient.addColorStop(0.5, '#48dbfb');
+        gradient.addColorStop(0.75, '#ff9ff3');
+        gradient.addColorStop(1, '#54a0ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        break;
+      }
+      case 'floral': {
+        ctx.fillStyle = '#f8f4e3';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.strokeStyle = '#7c9473';
+        ctx.lineWidth = 2;
+        // Draw vine pattern
+        for (let i = 0; i < canvasWidth; i += 50) {
+          drawFlower(ctx, i + 25, 20);
+          drawFlower(ctx, i + 25, canvasHeight - 20);
+        }
+        for (let i = 50; i < canvasHeight - 50; i += 50) {
+          drawFlower(ctx, 20, i + 25);
+          drawFlower(ctx, canvasWidth - 20, i + 25);
+        }
+        break;
+      }
+      case 'polaroid': {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        break;
+      }
+      case 'classic': {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.strokeStyle = '#e5e5e5';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(10, 10, canvasWidth - 20, canvasHeight - 20);
+        break;
+      }
+      case 'vintage': {
+        ctx.fillStyle = '#d4c5a9';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        break;
+      }
+      case 'neon': {
+        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+        gradient.addColorStop(0, '#ff1493');
+        gradient.addColorStop(0.5, '#8b5cf6');
+        gradient.addColorStop(1, '#00d4ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = '#0d0520';
+        ctx.fillRect(padding, padding, canvasWidth - padding * 2, canvasHeight - padding * 2);
+        break;
+      }
+    }
+  };
+
+  const drawHeart = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y + size / 4);
+    ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + size / 4);
+    ctx.bezierCurveTo(x - size / 2, y + size / 2, x, y + size * 0.75, x, y + size);
+    ctx.bezierCurveTo(x, y + size * 0.75, x + size / 2, y + size / 2, x + size / 2, y + size / 4);
+    ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + size / 4);
+    ctx.fill();
+  };
+
+  const drawStar = (ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerRadius: number, innerRadius: number) => {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  const drawFlower = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+    ctx.fillStyle = '#e8a87c';
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.ellipse(x + Math.cos(i * Math.PI * 2 / 5) * 6, y + Math.sin(i * Math.PI * 2 / 5) * 6, 5, 3, i * Math.PI * 2 / 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f8e16c';
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || images.length === 0) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = new Image();
-    img.onload = () => {
-      // Set canvas size based on frame type
-      const padding = frame === 'polaroid' ? 40 : frame === 'classic' ? 30 : frame === 'vintage' ? 24 : frame === 'neon' ? 16 : 0;
-      const bottomPadding = frame === 'polaroid' ? 80 : padding;
+    const loadImages = async () => {
+      const loadedImages = await Promise.all(
+        images.map(src => {
+          return new Promise<HTMLImageElement>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = src;
+          });
+        })
+      );
 
-      canvas.width = img.width + padding * 2;
-      canvas.height = img.height + padding + bottomPadding;
+      const padding = frame === 'none' ? 0 : frame === 'polaroid' ? 40 : frame === 'filmstrip' ? 35 : 30;
+      const gap = 8;
+      const imgWidth = loadedImages[0].width;
+      const imgHeight = loadedImages[0].height;
 
-      // Draw frame background
-      if (frame === 'polaroid') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else if (frame === 'classic') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#e5e5e5';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-      } else if (frame === 'vintage') {
-        ctx.fillStyle = '#d4c5a9';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else if (frame === 'neon') {
-        // Create neon gradient border
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, '#ff1493');
-        gradient.addColorStop(0.5, '#8b5cf6');
-        gradient.addColorStop(1, '#00d4ff');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#0d0520';
-        ctx.fillRect(padding, padding, img.width, img.height);
-      }
+      let canvasWidth: number;
+      let canvasHeight: number;
+      let positions: { x: number; y: number; w: number; h: number }[] = [];
 
-      // Draw image
-      ctx.drawImage(img, padding, padding);
-
-      // Apply filter
-      if (filter !== 'normal') {
-        const imageDataObj = ctx.getImageData(padding, padding, img.width, img.height);
-        const data = imageDataObj.data;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-
-          switch (filter) {
-            case 'grayscale': {
-              const gray = r * 0.299 + g * 0.587 + b * 0.114;
-              data[i] = gray;
-              data[i + 1] = gray;
-              data[i + 2] = gray;
-              break;
-            }
-            case 'sepia': {
-              data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-              data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-              data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
-              break;
-            }
-            case 'contrast': {
-              const factor = 1.4;
-              data[i] = Math.min(255, Math.max(0, (r - 128) * factor + 128));
-              data[i + 1] = Math.min(255, Math.max(0, (g - 128) * factor + 128));
-              data[i + 2] = Math.min(255, Math.max(0, (b - 128) * factor + 128));
-              break;
-            }
-            case 'vintage': {
-              data[i] = Math.min(255, r * 1.1 + 20);
-              data[i + 1] = Math.min(255, g * 0.9 + 10);
-              data[i + 2] = Math.min(255, b * 0.7);
-              break;
-            }
-            case 'cool': {
-              data[i] = r * 0.9;
-              data[i + 1] = g;
-              data[i + 2] = Math.min(255, b * 1.2 + 20);
-              break;
-            }
-          }
+      switch (collageMode) {
+        case 'grid-2': {
+          // 2 photos side by side
+          const cellWidth = imgWidth / 2;
+          const cellHeight = imgHeight / 2;
+          canvasWidth = cellWidth * 2 + gap + padding * 2;
+          canvasHeight = cellHeight + padding * 2 + (frame === 'polaroid' ? 40 : 0);
+          positions = [
+            { x: padding, y: padding, w: cellWidth, h: cellHeight },
+            { x: padding + cellWidth + gap, y: padding, w: cellWidth, h: cellHeight },
+          ];
+          break;
         }
-
-        ctx.putImageData(imageDataObj, padding, padding);
+        case 'grid-3': {
+          // 2 on top, 1 on bottom (centered)
+          const cellWidth = imgWidth / 2;
+          const cellHeight = imgHeight / 2;
+          canvasWidth = cellWidth * 2 + gap + padding * 2;
+          canvasHeight = cellHeight * 2 + gap + padding * 2 + (frame === 'polaroid' ? 40 : 0);
+          positions = [
+            { x: padding, y: padding, w: cellWidth, h: cellHeight },
+            { x: padding + cellWidth + gap, y: padding, w: cellWidth, h: cellHeight },
+            { x: padding + cellWidth / 2 + gap / 2, y: padding + cellHeight + gap, w: cellWidth, h: cellHeight },
+          ];
+          break;
+        }
+        case 'grid-4': {
+          // 2x2 grid
+          const cellWidth = imgWidth / 2;
+          const cellHeight = imgHeight / 2;
+          canvasWidth = cellWidth * 2 + gap + padding * 2;
+          canvasHeight = cellHeight * 2 + gap + padding * 2 + (frame === 'polaroid' ? 40 : 0);
+          positions = [
+            { x: padding, y: padding, w: cellWidth, h: cellHeight },
+            { x: padding + cellWidth + gap, y: padding, w: cellWidth, h: cellHeight },
+            { x: padding, y: padding + cellHeight + gap, w: cellWidth, h: cellHeight },
+            { x: padding + cellWidth + gap, y: padding + cellHeight + gap, w: cellWidth, h: cellHeight },
+          ];
+          break;
+        }
+        default: {
+          // Single photo
+          canvasWidth = imgWidth + padding * 2;
+          canvasHeight = imgHeight + padding + (frame === 'polaroid' ? padding + 40 : padding);
+          positions = [{ x: padding, y: padding, w: imgWidth, h: imgHeight }];
+        }
       }
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Draw frame background first
+      drawFrame(ctx, canvasWidth, canvasHeight, padding);
+
+      // Draw images
+      loadedImages.forEach((img, idx) => {
+        if (positions[idx]) {
+          const { x, y, w, h } = positions[idx];
+          ctx.drawImage(img, 0, 0, img.width, img.height, x, y, w, h);
+        }
+      });
+
+      // Apply filter to all images
+      positions.forEach((pos) => {
+        applyFilter(ctx, pos.x, pos.y, pos.w, pos.h);
+      });
     };
 
-    img.src = imageData;
-  }, [imageData, filter, frame]);
+    loadImages();
+  }, [images, filter, frame, collageMode]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
 
     const link = document.createElement('a');
-    link.download = `photobooth-${Date.now()}.png`;
+    link.download = `photobooth-${collageMode}-${Date.now()}.png`;
     link.href = canvasRef.current.toDataURL('image/png');
     link.click();
 
@@ -189,7 +389,6 @@ const PhotoResult = ({ imageData, onRetake }: PhotoResultProps) => {
       return;
     }
 
-    // Simulate sending email
     console.log(`Mengirim foto ke: ${email}`);
     setEmailSent(true);
     
@@ -219,7 +418,7 @@ const PhotoResult = ({ imageData, onRetake }: PhotoResultProps) => {
       </div>
 
       {/* Controls Panel */}
-      <div className="lg:w-80 flex flex-col gap-6 glass-panel p-6 rounded-2xl">
+      <div className="lg:w-80 flex flex-col gap-6 glass-panel p-6 rounded-2xl max-h-[80vh] overflow-y-auto">
         <h2 className="font-display text-xl font-bold text-gradient">Edit Foto</h2>
 
         {/* Filter Selection */}
