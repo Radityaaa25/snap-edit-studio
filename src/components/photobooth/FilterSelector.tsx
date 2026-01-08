@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type FilterType = 'normal' | 'grayscale' | 'sepia' | 'contrast' | 'vintage' | 'cool';
+export type FilterType = 'normal' | 'grayscale' | 'sepia' | 'contrast' | 'vintage' | 'cool' | 'soft' | 'golden' | 'dreamy';
 
 interface FilterSelectorProps {
   currentFilter: FilterType;
@@ -14,6 +14,9 @@ const filters: { id: FilterType; name: string; preview: string }[] = [
   { id: 'contrast', name: 'Vivid', preview: 'bg-gradient-to-br from-purple-500 to-pink-500' },
   { id: 'vintage', name: 'Vintage', preview: 'bg-gradient-to-br from-yellow-600 to-orange-700' },
   { id: 'cool', name: 'Cool', preview: 'bg-gradient-to-br from-blue-400 to-cyan-500' },
+  { id: 'soft', name: 'Soft', preview: 'bg-gradient-to-br from-pink-200 to-rose-300' },
+  { id: 'golden', name: 'Golden', preview: 'bg-gradient-to-br from-yellow-400 to-orange-500' },
+  { id: 'dreamy', name: 'Dreamy', preview: 'bg-gradient-to-br from-indigo-300 to-purple-300' },
 ];
 
 const FilterSelector = ({ currentFilter, onSelectFilter }: FilterSelectorProps) => {

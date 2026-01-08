@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
-import { Frame, Square, Sparkles, Sun, Heart, Star, Flower2, Film, ImagePlus } from 'lucide-react';
+import { Frame, Square, Sparkles, Sun, Heart, Star, Flower2, Film, ImagePlus, RectangleHorizontal, Layers, Gem } from 'lucide-react';
 
-export type FrameType = 'none' | 'classic' | 'polaroid' | 'neon' | 'vintage' | 'heart' | 'stars' | 'filmstrip' | 'gradient' | 'floral';
+export type FrameType = 'none' | 'classic' | 'polaroid' | 'neon' | 'vintage' | 'heart' | 'stars' | 'filmstrip' | 'gradient' | 'floral' | 'modern' | 'elegant' | 'cyber';
 
 interface FrameSelectorProps {
   currentFrame: FrameType;
@@ -19,6 +19,9 @@ const frames: { id: FrameType; name: string; icon: React.ReactNode }[] = [
   { id: 'filmstrip', name: 'Film', icon: <Film className="w-5 h-5" /> },
   { id: 'gradient', name: 'Gradient', icon: <ImagePlus className="w-5 h-5" /> },
   { id: 'floral', name: 'Floral', icon: <Flower2 className="w-5 h-5" /> },
+  { id: 'modern', name: 'Modern', icon: <RectangleHorizontal className="w-5 h-5" /> },
+  { id: 'elegant', name: 'Elegant', icon: <Layers className="w-5 h-5" /> },
+  { id: 'cyber', name: 'Cyber', icon: <Gem className="w-5 h-5" /> },
 ];
 
 const FrameSelector = ({ currentFrame, onSelectFrame }: FrameSelectorProps) => {

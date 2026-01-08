@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
-import { Grid2X2, Grid3x3, LayoutGrid, Square } from 'lucide-react';
+import { Grid2X2, Grid3x3, LayoutGrid, Square, StretchVertical, ScrollText } from 'lucide-react';
 
-export type CollageType = 'single' | 'grid-2' | 'grid-3' | 'grid-4';
+export type CollageType = 'single' | 'grid-2' | 'grid-3' | 'grid-4' | 'vertical-3' | 'vertical-4';
 
 interface CollageSelectorProps {
   currentCollage: CollageType;
@@ -10,9 +10,12 @@ interface CollageSelectorProps {
 
 const collageOptions: { id: CollageType; name: string; icon: React.ReactNode; photoCount: number }[] = [
   { id: 'single', name: '1 Foto', icon: <Square className="w-5 h-5" />, photoCount: 1 },
-  { id: 'grid-2', name: '2 Foto', icon: <Grid2X2 className="w-5 h-5" />, photoCount: 2 },
-  { id: 'grid-3', name: '3 Foto', icon: <LayoutGrid className="w-5 h-5" />, photoCount: 3 },
-  { id: 'grid-4', name: '4 Foto', icon: <Grid3x3 className="w-5 h-5" />, photoCount: 4 },
+  { id: 'grid-2', name: '2 Grid', icon: <Grid2X2 className="w-5 h-5" />, photoCount: 2 },
+  { id: 'grid-3', name: '3 Grid', icon: <LayoutGrid className="w-5 h-5" />, photoCount: 3 },
+  { id: 'grid-4', name: '4 Grid', icon: <Grid3x3 className="w-5 h-5" />, photoCount: 4 },
+  // --- TAMBAHAN VERTICAL ---
+  { id: 'vertical-3', name: '3 Strip', icon: <StretchVertical className="w-5 h-5" />, photoCount: 3 },
+  { id: 'vertical-4', name: '4 Strip', icon: <ScrollText className="w-5 h-5" />, photoCount: 4 },
 ];
 
 export const getPhotoCount = (collage: CollageType): number => {

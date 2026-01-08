@@ -65,6 +65,27 @@ const PhotoResult = ({ images, collageMode, onRetake }: PhotoResultProps) => {
           data[i + 2] = Math.min(255, b * 1.2 + 20);
           break;
         }
+        case 'soft': {
+          // Kurangi kontras sedikit dan tambah brightness
+          data[i] = Math.min(255, (r - 128) * 0.8 + 128 + 20);
+          data[i + 1] = Math.min(255, (g - 128) * 0.8 + 128 + 20);
+          data[i + 2] = Math.min(255, (b - 128) * 0.8 + 128 + 20);
+          break;
+        }
+        case 'golden': {
+          // Tambah merah dan hijau (kuning)
+          data[i] = Math.min(255, r * 1.1 + 30);
+          data[i + 1] = Math.min(255, g * 1.1 + 20);
+          data[i + 2] = b * 0.9;
+          break;
+        }
+        case 'dreamy': {
+          // Sedikit keunguan dan terang
+          data[i] = Math.min(255, r * 1.05 + 10);
+          data[i + 1] = Math.min(255, g * 0.95);
+          data[i + 2] = Math.min(255, b * 1.1 + 20);
+          break;
+        }
       }
     }
 
@@ -169,6 +190,47 @@ const PhotoResult = ({ images, collageMode, onRetake }: PhotoResultProps) => {
         ctx.fillRect(padding, padding, canvasWidth - padding * 2, canvasHeight - padding * 2);
         break;
       }
+      case 'modern': {
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(padding/2, padding/2, canvasWidth - padding, canvasHeight - padding);
+        break;
+      }
+      case 'elegant': {
+        ctx.fillStyle = '#fdfdfd';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        ctx.strokeStyle = '#d4af37'; 
+        ctx.lineWidth = 4;
+        ctx.strokeRect(15, 15, canvasWidth - 30, canvasHeight - 30);
+        
+        ctx.strokeStyle = '#1a1a1a'; 
+        ctx.lineWidth = 1;
+        ctx.strokeRect(22, 22, canvasWidth - 44, canvasHeight - 44);
+        break;
+      }
+      case 'cyber': {
+        ctx.fillStyle = '#050510';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        ctx.strokeStyle = '#00f3ff'; 
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#00f3ff';
+        ctx.shadowBlur = 10;
+        ctx.strokeRect(10, 10, canvasWidth - 20, canvasHeight - 20);
+        
+        ctx.shadowBlur = 0;
+        
+        ctx.fillStyle = '#ff00ff';
+        ctx.fillRect(5, 5, 20, 4); 
+        ctx.fillRect(5, 5, 4, 20);
+        
+        ctx.fillRect(canvasWidth - 25, canvasHeight - 9, 20, 4); 
+        ctx.fillRect(canvasWidth - 9, canvasHeight - 25, 4, 20);
+        break;
+      }
     }
   };
 
@@ -237,7 +299,13 @@ const PhotoResult = ({ images, collageMode, onRetake }: PhotoResultProps) => {
         })
       );
 
-      const padding = frame === 'none' ? 0 : frame === 'polaroid' ? 40 : frame === 'filmstrip' ? 35 : 30;
+      const padding = frame === 'none' ? 0 : 
+                     frame === 'polaroid' ? 40 : 
+                     frame === 'filmstrip' ? 35 : 
+                     frame === 'modern' ? 50 : 
+                     frame === 'elegant' ? 40 : 
+                     frame === 'cyber' ? 30 : 
+                     30;
       const gap = 8;
       const imgWidth = loadedImages[0].width;
       const imgHeight = loadedImages[0].height;
@@ -283,6 +351,29 @@ const PhotoResult = ({ images, collageMode, onRetake }: PhotoResultProps) => {
             { x: padding + cellWidth + gap, y: padding, w: cellWidth, h: cellHeight },
             { x: padding, y: padding + cellHeight + gap, w: cellWidth, h: cellHeight },
             { x: padding + cellWidth + gap, y: padding + cellHeight + gap, w: cellWidth, h: cellHeight },
+          ];
+          break;
+        }
+        case 'vertical-3': {
+          // 3 photos vertical strip
+          canvasWidth = imgWidth + padding * 2;
+          canvasHeight = imgHeight * 3 + gap * 2 + padding * 2 + (frame === 'polaroid' ? 40 : 0);
+          positions = [
+            { x: padding, y: padding, w: imgWidth, h: imgHeight },
+            { x: padding, y: padding + imgHeight + gap, w: imgWidth, h: imgHeight },
+            { x: padding, y: padding + (imgHeight + gap) * 2, w: imgWidth, h: imgHeight },
+          ];
+          break;
+        }
+        case 'vertical-4': {
+          // 4 photos vertical strip
+          canvasWidth = imgWidth + padding * 2;
+          canvasHeight = imgHeight * 4 + gap * 3 + padding * 2 + (frame === 'polaroid' ? 40 : 0);
+          positions = [
+            { x: padding, y: padding, w: imgWidth, h: imgHeight },
+            { x: padding, y: padding + imgHeight + gap, w: imgWidth, h: imgHeight },
+            { x: padding, y: padding + (imgHeight + gap) * 2, w: imgWidth, h: imgHeight },
+            { x: padding, y: padding + (imgHeight + gap) * 3, w: imgWidth, h: imgHeight },
           ];
           break;
         }
